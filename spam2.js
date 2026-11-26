@@ -38,7 +38,8 @@ MC_CHAR_WIDTHS = {
     "s": 6, "t": 4, "u": 6, "v": 6, "w": 6, "x": 6, "y": 6, "z": 6,
     "{": 5, "|": 2, "}": 5, "~": 7,
 }
-const messageee=[
+// https://gist.githubusercontent.com/cpdean/5bcc526fe7f1e64cf766/raw/fa9f4da6265e644ea1a0e7ee4c72916b0a55aeb4/doge.md
+const doge1=[
     "                Y.                      _   ",
     "                YiL                   .```.  ",
     "                Yii;                .; .;;`.    ",
@@ -62,12 +63,38 @@ const messageee=[
     "      .i!$$$$$$YYYYYYYYY$$$$$$YYY$$YYiiiiiiYYYYYYY    ",
     "     :YYiii$$$$$$$YYYYYYY$$$$YY$$$$YYiiiiiYYYYYYi'    ",
 ];
+// https://cmang.org/ascii/cm-doge2.txt
+const doge2=[
+
+"                 ;i.",
+"                  M$L                    .;i.",
+"                  M$Y;                .;iii;;.",
+"                 ;$YY$i._           .iiii;;;;;",
+"                .iiiYYYYYYiiiii;;;;i;iii;; ;;;",
+"              .;iYYYYYYiiiiiiYYYiiiiiii;;  ;;;",
+"           .YYYY$$$$YYYYYYYYYYYYYYYYiii;; ;;;;",
+"         .YYY$$$$$$YYYYYY$$$$iiiY$$$$$$$ii;;;;",
+"        :YYYF`,  TYYYYY$$$$$YYYYYYYi$$$$$iiiii;",
+"        Y$MM: \  :YYYY$$P\"\`\`\`\`\"T$YYMMMMMMMMiiYY.",
+"     `.;$$M$$b.,dYY$$Yi; .(     .YYMMM$$$MMMMYY",
+"   .._$MMMMM$!YYYYYYYYYi;.`\"  .;iiMMM$MMMMMMMYY",
+"    ._$MMMP` ```\"\"4$$$$$iiiiiiii$MMMMMMMMMMMMMY;",
+"     MMMM$:       :$$$$$$$MMMMMMMMMMM$$MMMMMMMYYL",
+"    :MMMM$$.    .;PPb$$$$MMMMMMMMMM$$$$MMMMMMiYYU:",
+"     iMM$$;;: ;;;;i$$$$$$$MMMMM$$$$MMMMMMMMMMYYYYY",
+"     `$$$$i .. ``:iiii!*\"\`\`.$$$$$$$$$MMMMMMM$YiYYY",
+"      :Y$$iii;;;.. ` ..;;i$$$$$$$$$MMMMMM$$YYYYiYY:",
+"       :$$$$$iiiiiii$$$$$$$$$$$MMMMMMMMMMYYYYiiYYYY.",
+"        `$$$$$$$$$$$$$$$$$$$$MMMMMMMM$YYYYYiiiYYYYYY",
+"         YY$$$$$$$$$$$$$$$$MMMMMMM$$YYYiiiiiiYYYYYYY",
+"        :YYYYYY$$$$$$$$$$$$$$$$$$YYYYYYYiiiiYYYYYYi' cmang",
+];
 
 // constructing actually sent strings
 const chatLengthLimit=320; //default chat window pixel width
 themessagetosend=[]
-for(let j=0;j<messageee.length;j++){
-    const str=messageee[j]
+for(let j=0;j<doge2.length;j++){
+    const str=doge2[j]
     let width=0
     let i=0
     // accounting for username chat width footprint
@@ -111,21 +138,19 @@ for(let j=0;j<messageee.length;j++){
         //bot.chat("( ͡° ͜ʖ ͡°)")
         //return "a"
 
-async function spam(j){
-    //bot.chat(i)
-    //bot.chat("a\nv\nv")
-    const ticks=30 //delay between each message, each tick is .05 seconds
-    
-    const chatLengthLimit=320; //default
-    //for(const str of messageee){
+async function spam(activebot,j){
+    // get str to send
     const str=themessagetosend[j%themessagetosend.length]
-    width=0
-    waiting=bot.waitForTicks(ticks)
-        
+    
+    // wait
+    const ticks=30 //delay between each message, each tick is .05 seconds
+    waiting=activebot.waitForTicks(ticks)
     await waiting;
-    bot.chat(str)
+
+    // send message
+    activebot.chat(str)
 }
-wait=false;
+
 // bot.one runs a given function on a given event one time
 bot.once("spawn",()=>{onspawn(bot)})
 async function onspawn(bot){
@@ -142,6 +167,7 @@ async function onspawn(bot){
     //    //console.log(s)
     //})
     //let j=k;
+    let wait=false;
     bot.on('messagestr', (message) => {
         console.log(message)
         //if (logChat && message.trim()) console.log(`[MC] ${message}`)
@@ -153,12 +179,12 @@ async function onspawn(bot){
         }
     })
     async function waiting(n){
-        wait=false
         try{
-            await spam(k)
+            await spam(bot,n)
         }catch(e){
             console.log("failed to spam "+k+" :( "+e)
         }
+        wait=false
     }
     //bot.on('chat', (username, message) => {
     //    //if (username !== OWNER || !message.startsWith('!')) return
@@ -173,14 +199,16 @@ async function onspawn(bot){
     
     
 }
-bot.once("end",(reason)=>{
+function comeback(reason){
     console.log("Disconnected! Reason: "+reason)
     const bot2=mineflayer.createBot(options)
     process.stdout.write("Attempting reconnect...")
     bot2.once("spawn",()=>{onspawn(bot2)})
-    bot2.on("kicked",(reason)=>console.log("Kicked: "+reason))
-    bot2.on("error",(err)=>console.log("Error: "+err))
-})
+    bot2.on("kicked",(reason)=>console.log("Kicked: ",reason))
+    bot2.on("error",(err)=>console.log("Error: ",err))
+    bot2.once("end",(reason)=>{comeback(reason)})
+}
+bot.once("end",(reason)=>{comeback(reason)})
 
-bot.on("kicked",(reason)=>console.log("Kicked: "+reason))
-bot.on("error",(err)=>console.log("Error: "+err))
+bot.on("kicked",(reason)=>console.log("Kicked: ",reason))
+bot.on("error",(err)=>console.log("Error: ",err))
